@@ -1,2 +1,2 @@
 # Jovemtech
-Primeiro repositorio do jovem tech
+Primeiro repositório do jovem tech
