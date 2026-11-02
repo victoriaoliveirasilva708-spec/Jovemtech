@@ -1,4 +1,5 @@
 let nota = 8; 
+//simulador de media de um aluno 
 if (nota >= 7){
     console.log("Aluno aprovado!");
 }
