@@ -6,6 +6,7 @@ const prompt = require('prompt-sync')(); // garante que o prompt funcione no nod
 let numeros = []; // criar um vetor vazio para armazenar os números.
 for (let i = 0; i < 6; i++){
    let numero = parseInt(prompt(`Digite o ${i + 1}º número: `)); // solicitar que o usuário digite um número e converter para inteiro
+   numeros.push(numero); // Adiciona o número ao vetor!
 }
 
 let impares = numeros.filter(num => num % 2 !== 0); // filtrar os números ímpares do vetor
