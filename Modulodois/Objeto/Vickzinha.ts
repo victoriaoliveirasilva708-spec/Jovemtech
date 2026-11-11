@@ -74,7 +74,10 @@ while (!demonio.derrotado) {
  
   // O demônio contra-ataca, alternando entre os heróis
   if (!demonio.derrotado) {
-    demonio.atacar(herois[(rodada - 1) % herois.length]);
+    const alvo = herois[(rodada - 1) % herois.length];
+    if (alvo) {
+      demonio.atacar(alvo);
+    }
   }
  
   console.log("");
