@@ -12,7 +12,7 @@ class Personagem {
 
   // Transformar as funções do personagem em métodos
   atirarBolaDeFogo(): void {
-    console.log(`🔥 ${this.nome} lançou uma BOLA DE FOGO!`);
+    console.log(` ${this.nome} lançou uma BOLA DE FOGO!`);
     this.pontos += 10;
     console.log(`Pontos atuais de ${this.nome}: ${this.pontos}`);
   }
@@ -25,7 +25,6 @@ class Personagem {
 }
 
 // Identificar o personagem principal do jogo
-// Substituir os objetos literais por instâncias
 const heroi = new Personagem("Vickzinha");
 
 // Testar o jogo funcionando
@@ -36,5 +35,6 @@ heroi.exibirStatus();
 heroi.atirarBolaDeFogo();
 heroi.atirarBolaDeFogo();
 
-// Conferindo o resultado final do teste
+// Conferindo o resultado 
 heroi.exibirStatus();
+ 
