@@ -1,4 +1,4 @@
- Batalha contra o Demônio
+Batalha contra o Demônio
 
 Jogo de batalha por turnos no terminal, feito em **TypeScript** para praticar orientação a objetos (herança, polimorfismo e encapsulamento). Você monta uma equipe de 1 ou 2 heróis, escolhe nome e classe de cada um e enfrenta o Demônio.
 
