@@ -1,4 +1,4 @@
-import * as readline from "readline/promises";
+import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 
 const rl = readline.createInterface({ input, output });
@@ -6,6 +6,11 @@ const rl = readline.createInterface({ input, output });
 //  1. CONFIGURAÇÃO - todos os números do jogo ficam aqui
 
 const CONFIG = {
+  equipe: {
+    minimo: 1, // menor equipe que o jogador pode formar
+    maximo: 2, // maior equipe que o jogador pode formar
+  },
+  nomeMaximo: 14, // tamanho máximo do nome (cabe na coluna da cena)
   heroi: {
     vidasMaximas: 5,
     manaMaxima: 50,
@@ -16,7 +21,8 @@ const CONFIG = {
     chanceCritico: 0.25,
   },
   demonio: {
-    vida: 200,
+    // A vida do demônio depende do tamanho da equipe (valores testados em simulação)
+    vidaPorTamanhoDeEquipe: { 1: 90, 2: 200 } as Record<number, number>,
     danoNormal: 2, // vidas que 1 herói perde no ataque normal
     chanceOnda: 0.4, // chance de usar a Onda de Trevas
     danoOnda: 2, // vidas que CADA herói perde na Onda de Trevas
@@ -50,6 +56,14 @@ const ARTE = {
     "   / \\   ",
     "         ",
   ],
+  arqueiro: [
+    "   ,-,   ",
+    "  (o.o)  ",
+    " /|#|)-> ",
+    "   |#|   ",
+    "   / \\   ",
+    "         ",
+  ],
   demonio: [
     " \\|/ \\|/ ",
     "  (>_<)  ",
@@ -67,6 +81,7 @@ const ARTE = {
     "         ",
   ],
 };
+
 
 //  3. FUNÇÕES AUXILIARES (visual)
 
@@ -104,6 +119,7 @@ abstract class Heroi {
 
   constructor(
     public nome: string,
+    public classe: string, // "Maga", "Guerreiro"... aparece no menu de escolha
     public nomeDoPoder: string,
     public danoBase: number,
     public custoManaEspecial: number,
@@ -126,8 +142,6 @@ abstract class Heroi {
     this.defendendo = false;
   }
 
-  // ---- Ações (todas devolvem true se foram executadas) ----
-
   async atacarBasico(demonio: Demonio): Promise<boolean> {
     await animarAtaque(this.iconeBasico, true);
 
@@ -137,7 +151,7 @@ abstract class Heroi {
 
     console.log(
       `⚔️  ${this.nome} fez um ataque básico! Dano: ${dano} (+${CONFIG.heroi.manaPorAtaqueBasico} Mana) | ` +
-        `Vida do Demônio: ${demonio.vida}/${CONFIG.demonio.vida}`
+        `Vida do Demônio: ${demonio.vida}/${demonio.vidaMaxima}`
     );
     return true;
   }
@@ -157,7 +171,7 @@ abstract class Heroi {
 
     console.log(
       `${this.iconeEspecial} ${this.nome} usou ${this.nomeDoPoder}! ${critico ? "💥 CRÍTICO! " : ""}` +
-        `Dano: ${dano} | Vida do Demônio: ${demonio.vida}/${CONFIG.demonio.vida}`
+        `Dano: ${dano} | Vida do Demônio: ${demonio.vida}/${demonio.vidaMaxima}`
     );
     return true;
   }
@@ -210,20 +224,39 @@ abstract class Heroi {
 
 class Maga extends Heroi {
   constructor(nome: string) {
-    super(nome, "BOLA DE FOGO", 30, 25, ARTE.maga, "✨", "🔥");
+    super(nome, "Maga", "BOLA DE FOGO", 30, 25, ARTE.maga, "✨", "🔥");
   }
 }
 
 class Guerreiro extends Heroi {
   constructor(nome: string) {
-    super(nome, "GOLPE DE ESPADA", 40, 20, ARTE.guerreiro, "💨", "🗡️");
+    super(nome, "Guerreiro", "GOLPE DE ESPADA", 40, 20, ARTE.guerreiro, "💨", "🗡️");
   }
 }
 
+class Arqueiro extends Heroi {
+  constructor(nome: string) {
+    super(nome, "Arqueiro", "CHUVA DE FLECHAS", 35, 22, ARTE.arqueiro, "🎯", "🏹");
+  }
+}
+
+// Lista de classes disponíveis para o jogador escolher.
+// Para criar uma classe nova: faça a classe e acrescente uma linha aqui.
+const CLASSES: ((nome: string) => Heroi)[] = [
+  (nome) => new Maga(nome),
+  (nome) => new Guerreiro(nome),
+  (nome) => new Arqueiro(nome),
+];
+
 class Demonio {
-  vida = CONFIG.demonio.vida;
+  vida: number;
   ataquesDados = 0;
   arte = ARTE.demonio;
+
+  // A vida máxima é definida quando o demônio é criado (depende da equipe)
+  constructor(public vidaMaxima: number) {
+    this.vida = vidaMaxima;
+  }
 
   get derrotado(): boolean {
     return this.vida <= 0;
@@ -287,7 +320,7 @@ function desenharCena(herois: Heroi[], demonio: Demonio): void {
     {
       figura: demonio.arte,
       nome: "Demonio",
-      hp: `HP ${barra(demonio.vida, CONFIG.demonio.vida, 8)}`,
+      hp: `HP ${barra(demonio.vida, demonio.vidaMaxima, 8)}`,
     },
   ];
 
@@ -312,6 +345,13 @@ function mostrarMenu(heroi: Heroi): void {
   console.log(`4 - Curar 💚 +1 Vida (Custa ${custoCura} Mana)`);
 }
 
+// ["Ana", "Bia", "Caio"] -> "Ana, Bia e Caio"
+function listaDeNomes(herois: Heroi[]): string {
+  const nomes = herois.map((h) => h.nome);
+  if (nomes.length === 1) return nomes[0];
+  return nomes.slice(0, -1).join(", ") + " e " + nomes[nomes.length - 1];
+}
+
 function mostrarResultado(herois: Heroi[], demonio: Demonio): void {
   const linha = "=".repeat(50);
 
@@ -319,7 +359,7 @@ function mostrarResultado(herois: Heroi[], demonio: Demonio): void {
   console.log(linha);
   console.log(
     demonio.derrotado
-      ? "🏆 VITÓRIA! Vickzinha e Capitão Yami derrotaram o Demônio!"
+      ? `🏆 VITÓRIA! ${listaDeNomes(herois)} derrotaram o Demônio!`
       : "💀 DERROTA! O Demônio venceu a batalha..."
   );
   console.log(linha + "\n");
@@ -328,9 +368,8 @@ function mostrarResultado(herois: Heroi[], demonio: Demonio): void {
   for (const heroi of herois) {
     console.log(`- ${heroi.nome}: ${heroi.ataquesDados} ataques | Vidas finais: ${heroi.vidas}/${CONFIG.heroi.vidasMaximas}`);
   }
-  console.log(`- Demônio: Vida final ${demonio.vida}/${CONFIG.demonio.vida} | Ataques realizados: ${demonio.ataquesDados}`);
+  console.log(`- Demônio: Vida final ${demonio.vida}/${demonio.vidaMaxima} | Ataques realizados: ${demonio.ataquesDados}`);
 }
-
 //  6. LÓGICA DA BATALHA
 
 // Cada tecla do menu aponta para uma ação do herói
@@ -361,21 +400,87 @@ async function turnoDoHeroi(heroi: Heroi, demonio: Demonio): Promise<void> {
   console.log("");
 }
 
+//  CRIAÇÃO DOS HERÓIS (o jogador escolhe nome e classe)
+
+async function perguntar(texto: string): Promise<string> {
+  return (await rl.question(texto)).trim();
+}
+
+// Mostra as classes e devolve a "fábrica" da classe escolhida
+async function escolherClasse(): Promise<(nome: string) => Heroi> {
+  console.log("\nClasses disponíveis:");
+  CLASSES.forEach((criar, i) => {
+    const modelo = criar("modelo"); // herói só para ler os dados e mostrar no menu
+    console.log(
+      `  ${i + 1} - ${modelo.classe.padEnd(10)} ${modelo.iconeEspecial} ${modelo.nomeDoPoder} ` +
+        `| Dano: ${modelo.danoBase} | Custo: ${modelo.custoManaEspecial} mana`
+    );
+  });
+
+  while (true) {
+    const numero = Number(await perguntar("👉 Escolha a classe: "));
+    const criar = CLASSES[numero - 1];
+    if (criar) return criar;
+    console.log(`⚠️  Opção inválida! Digite um número de 1 a ${CLASSES.length}.`);
+  }
+}
+
+// Pergunta quantos heróis vão para a batalha (entre o mínimo e o máximo)
+async function escolherTamanhoDaEquipe(): Promise<number> {
+  const { minimo, maximo } = CONFIG.equipe;
+
+  while (true) {
+    const resposta = await perguntar(`👥 Quantos heróis na equipe? (${minimo} a ${maximo}): `);
+    const quantidade = Number(resposta);
+
+    if (Number.isInteger(quantidade) && quantidade >= minimo && quantidade <= maximo) {
+      return quantidade;
+    }
+    console.log(`⚠️  Opção inválida! Digite um número de ${minimo} a ${maximo}.`);
+  }
+}
+
+async function criarHerois(quantidade: number): Promise<Heroi[]> {
+  const herois: Heroi[] = [];
+
+  for (let i = 1; i <= quantidade; i++) {
+    console.log(`\n===== CRIE O HERÓI ${i} =====`);
+
+    // Se o jogador não digitar nada, usa um nome padrão
+    const nome = (await perguntar("Nome do herói: ")).slice(0, CONFIG.nomeMaximo) || `Herói ${i}`;
+    const criar = await escolherClasse();
+
+    const heroi = criar(nome);
+    console.log(`✅ ${heroi.nome} (${heroi.classe}) entrou na batalha!`);
+    herois.push(heroi);
+  }
+
+  return herois;
+}
+
 async function iniciarJogo(): Promise<void> {
   console.clear();
   console.log("=".repeat(50));
-  console.log("⚔️  A BATALHA COMEÇOU! Vickzinha & Yami vs Demônio");
+  console.log("⚔️  BEM-VINDO À BATALHA CONTRA O DEMÔNIO!");
   console.log("=".repeat(50));
 
-  // Array polimórfico: Maga e Guerreiro tratados como Heroi
-  const herois: Heroi[] = [new Maga("Vickzinha"), new Guerreiro("Capitão Yami")];
-  const demonio = new Demonio();
+  // Array polimórfico: Maga, Guerreiro e Arqueiro tratados como Heroi
+  const quantidade = await escolherTamanhoDaEquipe();
+  const herois: Heroi[] = await criarHerois(quantidade);
+
+  // A vida do demônio se ajusta sozinha ao tamanho da equipe
+  const demonio = new Demonio(CONFIG.demonio.vidaPorTamanhoDeEquipe[herois.length]);
+
+  console.log("\n" + "=".repeat(50));
+  console.log(`⚔️  A BATALHA COMEÇOU! ${listaDeNomes(herois)} vs Demônio`);
+  console.log(`👿 O Demônio tem ${demonio.vidaMaxima} de vida para uma equipe de ${herois.length}.`);
+  console.log("=".repeat(50));
 
   const batalhaContinua = () => !demonio.derrotado && herois.some((h) => h.estaVivo);
 
   for (let rodada = 1; batalhaContinua(); rodada++) {
     console.log(`\n---------------- RODADA ${rodada} ----------------`);
-    console.log(`👿 Vida do Demônio: ${demonio.vida}/${CONFIG.demonio.vida}`);
+    console.log(`👿 Vida do Demônio: ${demonio.vida}/${demonio.vidaMaxima}`);
     desenharCena(herois, demonio);
 
     // Turno dos heróis
