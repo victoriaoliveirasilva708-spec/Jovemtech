@@ -17,4 +17,4 @@ Banco de dados relacional desenvolvido para gerenciar empresas, funcionários, e
 - ./esquemasupabase: Print do visualizador de esquema no Supabase.
 
 # Diagrama do Banco (Supabase)
-![Diagrama Supabase](./esquemasupabase)
+![Diagrama Supabase](.jovemtech/Bancodados/projeto/esquemasupabase)
