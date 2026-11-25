@@ -15,7 +15,7 @@ CREATE TABLE funcionario (
     CONSTRAINT fk_funcionario_empresa FOREIGN KEY (id_empresa) REFERENCES empresa (id_empresa) ON DELETE CASCADE
 );
 
-
+//adicionei tabela endereço 
 CREATE TABLE endereco (
     id_endereco SERIAL PRIMARY KEY,
     id_funcionario INT NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE endereco (
     CONSTRAINT fk_endereco_funcionario FOREIGN KEY (id_funcionario) REFERENCES funcionario (id_funcionario) ON DELETE CASCADE
 );
 
-
+//adicionei tabela telefone
 CREATE TABLE contatos (
     id_contatos SERIAL PRIMARY KEY,
     id_funcionario INT NOT NULL,
