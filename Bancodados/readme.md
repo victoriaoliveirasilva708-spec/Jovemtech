@@ -17,9 +17,9 @@ Banco de dados relacional desenvolvido para gerenciar empresas, funcionários, e
 - ./esquemasupabase: Print do visualizador de esquema no Supabase.
 
 # Diagrama do Banco (Supabase)
-![Diagrama Supabase](./projeto/esquemasupabase)
+[Diagrama Supabase](./projeto/esquemasupabase)
 
 # Links 
 Modelo conceitual no BRMW : [Modelo conceitual](https://app.brmodeloweb.com/publicview/6afdff819abef5d3f167b76e)
-Modelo logico no BRMW :  [Modelo logico](https://app.brmodeloweb.com/publicview/6b047998de91e041278fb30f)
+Modelo logico no BRMW :  [Modelo logico](https://app.brmodeloweb.com/publicview/6b0722fe1448006b56802ac0)
 
